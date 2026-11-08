@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Exam: Computer Engineering</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Custom Scrollbar for the review section */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const quizData = [
+            {
+                question: "1. What is the Nyquist rule for sampling an analog signal?",
+                options: [
+                    "Sample at more than twice the highest signal frequency",
+                    "Sample at exactly the highest signal frequency",
+                    "Sample at half the signal frequency",
+                    "Sample at 10 times the signal frequency"
+                ],
+                correctIndex: 0,
+                explanation: "The Nyquist rule dictates that the sampling frequency (fs) must be strictly greater than twice the maximum signal frequency (fmax) to prevent aliasing."
+            },
+            {
+                question: "2. In an ADC, how much does the Signal-to-Noise Ratio (SNR) improve for each additional bit of resolution?",
+                options: [
+                    "~3 dB",
+                    "~6 dB",
+                    "~10 dB",
+                    "~12 dB"
+                ],
+                correctIndex: 1,
+                explanation: "Each additional bit halves the quantization step size, which reduces quantization noise power and improves the SNR by approximately 6.02 dB."
+            },
+            {
+                question: "3. How many comparators are required to build an 8-bit Flash ADC?",
+                options: [
+                    "8",
+                    "16",
+                    "255",
+                    "256"
+                ],
+                correctIndex: 2,
+                explanation: "An N-bit flash ADC requires (2^N) - 1 comparators. For 8 bits, 2^8 - 1 = 255 comparators are needed to simultaneously check all voltage levels."
+            },
+            {
+                question: "4. Which ADC architecture finds the digital code using a binary search algorithm and is commonly built into microcontrollers?",
+                options: [
+                    "Flash ADC",
+                    "Pipeline ADC",
+                    "SAR ADC",
+                    "Sigma-Delta ADC"
+                ],
+                correctIndex: 2,
+                explanation: "The Successive Approximation Register (SAR) ADC resolves the code one bit per clock cycle using a binary search algorithm, making it ideal for microcontrollers due to its low power and moderate speed."
+            },
+            {
+                question: "5. In a Cortex-M core, what does the processor read from the first two words of the vector table (address 0x00000000 and 0x00000004) at boot?",
+                options: [
+                    "The bootloader and main function",
+                    "The initial stack pointer and Reset_Handler address",
+                    "The BOOT pin states and clock speed",
+                    "The interrupt flags and program counter"
+                ],
+                correctIndex: 1,
+                explanation: "Upon hardware reset, the Cortex-M processor automatically loads the Main Stack Pointer (MSP) from 0x00000000 and the Program Counter (Reset_Handler) from 0x00000004 before executing code."
+            },
+            {
+                question: "6. What critical task must the Reset_Handler perform before calling the C main() function?",
+                options: [
+                    "Initialize the RTOS scheduler",
+                    "Copy .data from flash to RAM and zero out .bss",
+                    "Enable all hardware interrupts",
+                    "Calibrate the ADC"
+                ],
+                correctIndex: 1,
+                explanation: "The C runtime environment expects global/static variables with initial values (.data) to be in RAM, and uninitialized globals (.bss) to be zeroed. The Reset_Handler manually performs this setup."
+            },
+            {
+                question: "7. How is a \"Firm\" deadline defined in a Real-Time Operating System?",
+                options: [
+                    "A missed deadline causes catastrophic system failure",
+                    "A late result is still useful but has degraded quality",
+                    "A late result is worthless (dropped), but the system tolerates rare misses",
+                    "A deadline that can be adjusted dynamically"
+                ],
+                correctIndex: 2,
+                explanation: "A firm deadline implies that any result computed after the deadline is completely useless and should be discarded, but an occasional missed deadline does not destroy the system (unlike a hard deadline)."
+            },
+            {
+                question: "8. What is the standard solution to prevent unbounded Priority Inversion in an RTOS?",
+                options: [
+                    "Disable all interrupts",
+                    "Priority Inheritance",
+                    "Round-robin scheduling",
+                    "Suspending the scheduler"
+                ],
+                correctIndex: 1,
+                explanation: "Priority Inheritance temporarily raises the priority of the task holding the contested resource to match the priority of the highest-priority task waiting for it."
+            },
+            {
+                question: "9. In Verilog, what hardware is unintentionally inferred if a variable is not assigned a value in all branches of an if-else or case statement?",
+                options: [
+                    "A multiplexer",
+                    "A flip-flop",
+                    "A latch",
+                    "A decoder"
+                ],
+                correctIndex: 2,
+                explanation: "If a value is not assigned in a specific branch, Verilog implies that the previous state must be maintained. This forces the synthesizer to infer a level-sensitive memory element (a latch)."
+            },
+            {
+                question: "10. Which assignment style should be used for Combinational logic inside a Verilog always block?",
+                options: [
+                    "Blocking assignments (=)",
+                    "Non-blocking assignments (<=)",
+                    "Continuous assignments (assign)",
+                    "Wire assignments"
+                ],
+                correctIndex: 0,
+                explanation: "Blocking assignments (=) execute sequentially and update variables immediately, accurately modeling the instant flow of data through multi-stage combinational logic."
+            },
+            {
+                question: "11. What is the definition of \"Setup Time\" in a sequential circuit?",
+                options: [
+                    "The time data must be stable AFTER the clock edge",
+                    "The time data must be stable BEFORE the clock edge",
+                    "The delay from the clock edge to the output changing",
+                    "The time it takes for a signal to travel through combinational logic"
+                ],
+                correctIndex: 1,
+                explanation: "Setup time is the minimum required interval just prior to the active clock edge during which the data input must remain stable to be reliably latched."
+            },
+            {
+                question: "12. Which equation determines the minimum clock period (T) for a synchronous circuit to function correctly?",
+                options: [
+                    "T > T_cd,reg + T_cd,logic + T_hold",
+                    "T > T_pd,reg + T_pd,logic + T_su",
+                    "T < T_pd,reg + T_su",
+                    "T = T_hold - T_su"
+                ],
+                correctIndex: 1,
+                explanation: "The clock period must be strictly greater than the maximum propagation delay of the source register, plus the longest combinational path, plus the setup time of the destination register."
+            },
+            {
+                question: "13. How do you prevent a Hold Time violation in a digital circuit?",
+                options: [
+                    "Ensure T_cd,reg + T_cd,logic > T_hold",
+                    "Increase the clock frequency",
+                    "Reduce the combinational logic delay to zero",
+                    "Ensure T_pd,reg + T_pd,logic < T_hold"
+                ],
+                correctIndex: 0,
+                explanation: "A hold time violation occurs if the new data races through the logic too fast. To prevent it, the minimum contamination delays of the register and logic must exceed the required hold time."
+            },
+            {
+                question: "14. What is the primary purpose of adding a Synchronizer (two series flip-flops) to an asynchronous input?",
+                options: [
+                    "To divide the clock frequency",
+                    "To allow time for metastable signals to resolve to a stable state",
+                    "To detect falling edges",
+                    "To increase the voltage of the signal"
+                ],
+                correctIndex: 1,
+                explanation: "Asynchronous inputs can violate setup/hold times, causing the first flip-flop to go metastable. A synchronizer adds a full clock cycle of buffer time, allowing the signal to settle to a valid 0 or 1."
+            },
+            {
+                question: "15. What distinguishes a Mealy FSM from a Moore FSM?",
+                options: [
+                    "A Mealy FSM output depends only on the current state",
+                    "A Mealy FSM output depends on both the current state and the current inputs",
+                    "A Mealy FSM uses latches instead of flip-flops",
+                    "A Mealy FSM cannot have combinational logic"
+                ],
+                correctIndex: 1,
+                explanation: "Unlike a Moore machine, a Mealy machine has a direct combinational path from the inputs to the outputs, meaning outputs can change immediately in response to input changes."
+            },
+            {
+                question: "16. Which ADC architecture uses oversampling, noise shaping, and a digital decimation filter to achieve very high resolution (16-24 bits)?",
+                options: [
+                    "SAR",
+                    "Flash",
+                    "Sigma-Delta",
+                    "Pipeline"
+                ],
+                correctIndex: 2,
+                explanation: "Sigma-Delta ADCs sample at frequencies far exceeding the Nyquist rate, shape quantization noise into higher frequencies, and then digitally filter and downsample the result."
+            },
+            {
+                question: "17. What is the main advantage of a Dual-Slope ADC?",
+                options: [
+                    "It converts in a single clock cycle",
+                    "It does not require a clock",
+                    "R, C, and clock errors cancel out, making it highly accurate",
+                    "It uses minimal silicon area for 4-bit conversion"
+                ],
+                correctIndex: 2,
+                explanation: "By integrating the unknown input and then discharging using a known reference, the dependencies on absolute values of the Resistor, Capacitor, and Clock cancel out mathematically."
+            },
+            {
+                question: "18. Which ADC resolves a few bits per stage and passes the residue to the next stage, providing high throughput but with some latency?",
+                options: [
+                    "Pipeline ADC",
+                    "Flash ADC",
+                    "SAR ADC",
+                    "Dual-Slope ADC"
+                ],
+                correctIndex: 0,
+                explanation: "A Pipeline ADC computes a few bits at a time and passes the amplified remainder (residue) to the next stage. It produces one sample per clock cycle but with a latency of several cycles."
+            },
+            {
+                question: "19. Why is the R-2R ladder DAC preferred over a binary-weighted resistor DAC for higher resolutions?",
+                options: [
+                    "It only requires two resistor values, improving matching and accuracy",
+                    "It does not require an operational amplifier",
+                    "It draws zero current",
+                    "It is naturally immune to aliasing"
+                ],
+                correctIndex: 0,
+                explanation: "A binary-weighted DAC requires extremely large resistor ratios (e.g., 2048:1 for 12 bits) which are impossible to fabricate accurately on-chip. An R-2R ladder uses only two values (R and 2R) simplifying layout."
+            },
+            {
+                question: "20. What is the function of the BOOT pins on an STM32 microcontroller?",
+                options: [
+                    "They set the CPU clock frequency",
+                    "They choose which memory (Flash, SRAM, or System ROM) is aliased to address 0x00000000",
+                    "They supply power to the internal DAC",
+                    "They configure the UART baud rate"
+                ],
+                correctIndex: 1,
+                explanation: "The BOOT pins dynamically change the memory map alias at address 0x00000000, which directs the core to fetch its initial vector table and boot from either Main Flash, Bootloader ROM, or SRAM."
+            },
+            {
+                question: "21. In FreeRTOS, what state does a task enter when it calls vTaskDelay() or waits for data on an empty queue?",
+                options: [
+                    "Suspended",
+                    "Blocked",
+                    "Ready",
+                    "Running"
+                ],
+                correctIndex: 1,
+                explanation: "Waiting on a delay, queue, or semaphore moves a task into the Blocked state, allowing the scheduler to grant CPU time to other Ready tasks."
+            },
+            {
+                question: "22. Why is busy-waiting (e.g., an empty for-loop) strongly discouraged in an RTOS environment?",
+                options: [
+                    "It causes stack overflow",
+                    "It holds the CPU, preventing lower-priority tasks from running (starvation)",
+                    "It automatically triggers a system reset",
+                    "It corrupts the vector table"
+                ],
+                correctIndex: 1,
+                explanation: "Busy-waiting burns CPU cycles while keeping the task in the 'Running' state. A preemptive RTOS will not context switch to a lower-priority task, causing starvation."
+            },
+            {
+                question: "23. What is the correct way to send a signal from a Hardware Interrupt Service Routine (ISR) to a Task in FreeRTOS?",
+                options: [
+                    "Suspend the scheduler",
+                    "Use a standard Mutex",
+                    "Use a binary semaphore with a ...FromISR() API call",
+                    "Call vTaskDelay inside the ISR"
+                ],
+                correctIndex: 2,
+                explanation: "FreeRTOS provides specific API variants ending in 'FromISR' (like xSemaphoreGiveFromISR) that are designed to be safe for calling within an interrupt context."
+            },
+            {
+                question: "24. In Verilog, which operator is used to concatenate multiple signals into a single bus?",
+                options: [
+                    "[ ]",
+                    "( )",
+                    "{ }",
+                    "< >"
+                ],
+                correctIndex: 2,
+                explanation: "The curly braces { } are used to concatenate vectors. For example, {A, B} merges signal A and signal B into a single, wider bus."
+            },
+            {
+                question: "25. What causes unintended \"Priority Logic\" to be synthesized in Verilog?",
+                options: [
+                    "Using the assign statement",
+                    "Overlapping conditions in an if-else if chain",
+                    "Using blocking assignments in sequential logic",
+                    "Declaring a variable as type reg"
+                ],
+                correctIndex: 1,
+                explanation: "When if-else branches are used for non-mutually exclusive conditions, the synthesizer interprets the code literally from top to bottom, building a chain of multiplexers with strict priority."
+            },
+            {
+                question: "26. What is the defining operational difference between a D-Latch and a D-Flip-Flop?",
+                options: [
+                    "A Latch is edge-triggered; a Flip-Flop is level-sensitive",
+                    "A Latch is level-sensitive (transparent); a Flip-Flop is edge-triggered",
+                    "A Latch requires two clocks; a Flip-Flop requires one",
+                    "There is no functional difference"
+                ],
+                correctIndex: 1,
+                explanation: "A latch is transparent, meaning output follows input immediately as long as the gate is open (level-sensitive). A flip-flop updates its output only on a specific clock edge."
+            },
+            {
+                question: "27. Which scenario is most likely to cause Metastability in a digital circuit?",
+                options: [
+                    "Dividing the clock by 2",
+                    "Connecting an asynchronous external button directly to a state machine",
+                    "Using non-blocking assignments",
+                    "Operating at a frequency lower than 1 MHz"
+                ],
+                correctIndex: 1,
+                explanation: "An external button press is entirely decoupled from the system clock. Feeding it directly into a state machine guarantees that, eventually, it will violate setup/hold times and trigger metastability."
+            },
+            {
+                question: "28. How does a digital Debouncer circuit successfully clean up a noisy mechanical button press?",
+                options: [
+                    "It amplifies the voltage of the switch",
+                    "It waits for the input signal to remain stable for a predefined number of clock cycles (e.g., 2^N)",
+                    "It reverses the polarity of the button",
+                    "It immediately generates a pulse on the first detected edge"
+                ],
+                correctIndex: 1,
+                explanation: "A robust debouncer relies on a counter that resets upon any fluctuation. It only accepts the new state after the signal remains uniformly stable for a fixed interval."
+            },
+            {
+                question: "29. When implementing a Level-to-Pulse converter, what is a primary timing difference between a Moore and a Mealy implementation?",
+                options: [
+                    "The Moore output occurs one cycle earlier than the Mealy output",
+                    "The Mealy output occurs immediately based on the input, while the Moore output is delayed until the next state",
+                    "The Moore implementation requires no clock",
+                    "The Mealy implementation ignores the clock"
+                ],
+                correctIndex: 1,
+                explanation: "Because a Mealy output uses the current inputs directly, it asserts instantaneously. A Moore output relies entirely on the state registers, requiring an extra clock cycle to update the state first."
+            },
+            {
+                question: "30. What is the correct Verilog sensitivity list for a sequential block with an active-low asynchronous clear?",
+                options: [
+                    "always @(posedge clock or negedge clearb)",
+                    "always @(posedge clock or clearb)",
+                    "always @(posedge clock and negedge clearb)",
+                    "always @(clock or clearb)"
+                ],
+                correctIndex: 0,
+                explanation: "To ensure the block immediately executes whenever the asynchronous reset is asserted (goes low), 'negedge clearb' must be explicitly included in the sensitivity list alongside 'posedge clock'."
+            }
+        ];
+
+        function QuizApp() {
+            const [started, setStarted] = useState(false);
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [answers, setAnswers] = useState(Array(quizData.length).fill(null));
+            const [showResults, setShowResults] = useState(false);
+
+            // Navigate to specific question
+            const handleJump = (index) => {
+                setCurrentQuestion(index);
+            };
+
+            const handleOptionClick = (optionIndex) => {
+                const newAnswers = [...answers];
+                newAnswers[currentQuestion] = optionIndex;
+                setAnswers(newAnswers);
+            };
+
+            const handleNext = () => {
+                if (currentQuestion < quizData.length - 1) {
+                    setCurrentQuestion(currentQuestion + 1);
+                }
+            };
+
+            const handlePrev = () => {
+                if (currentQuestion > 0) {
+                    setCurrentQuestion(currentQuestion - 1);
+                }
+            };
+
+            const handleSubmit = () => {
+                const unansweredCount = answers.filter(a => a === null).length;
+                if (unansweredCount > 0) {
+                    if (!window.confirm(`You still have ${unansweredCount} unanswered questions. Are you sure you want to submit?`)) {
+                        return;
+                    }
+                }
+                setShowResults(true);
+            };
+
+            const handleRestart = () => {
+                setStarted(false);
+                setCurrentQuestion(0);
+                setAnswers(Array(quizData.length).fill(null));
+                setShowResults(false);
+            };
+
+            const calculateScore = () => {
+                return answers.reduce((score, answer, index) => {
+                    return answer === quizData[index].correctIndex ? score + 1 : score;
+                }, 0);
+            };
+
+            if (!started) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full text-center fade-in border-t-8 border-indigo-600">
+                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                            </div>
+                            <h1 className="text-3xl font-bold text-slate-800 mb-2">Final Mock Exam</h1>
+                            <h2 className="text-lg font-medium text-slate-500 mb-6">Computer Engineering Fundamentals</h2>
+                            <ul className="text-left text-slate-600 mb-8 space-y-2 bg-slate-50 p-4 rounded-lg text-sm">
+                                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Includes 30 comprehensive questions.</li>
+                                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Covers Digital Logic, Verilog, ADC/DAC, Booting, RTOS, and FSMs.</li>
+                                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> You can navigate between questions freely.</li>
+                            </ul>
+                            <button 
+                                onClick={() => setStarted(true)}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-6 rounded-xl transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                                Start Examination
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (showResults) {
+                const score = calculateScore();
+                const percentage = Math.round((score / quizData.length) * 100);
+                const pass = percentage >= 60;
+                
+                return (
+                    <div className="min-h-screen py-10 px-4 flex justify-center bg-slate-100">
+                        <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden fade-in flex flex-col h-[90vh]">
+                            {/* Fixed Header */}
+                            <div className="p-8 text-center border-b border-slate-100 bg-white z-10 shrink-0">
+                                <h2 className="text-2xl font-bold text-slate-800 mb-6">Examination Results</h2>
+                                <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+                                    <div className={`flex items-center justify-center w-32 h-32 rounded-full border-8 ${pass ? 'border-emerald-500 text-emerald-600 bg-emerald-50' : 'border-rose-500 text-rose-600 bg-rose-50'}`}>
+                                        <div className="text-center">
+                                            <span className="text-4xl font-extrabold block leading-none">{score}</span>
+                                            <span className="text-sm font-semibold opacity-70">/ {quizData.length}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-center md:text-left">
+                                        <div className="text-5xl font-black text-slate-800 tracking-tight">{percentage}%</div>
+                                        <p className={`text-lg font-medium mt-1 ${pass ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            {pass ? 'Excellent! You passed the mock exam.' : 'Keep studying. You did not meet the 60% threshold.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Scrollable Review Section */}
+                            <div className="p-6 md:p-8 overflow-y-auto grow bg-slate-50">
+                                <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    Detailed Review
+                                </h3>
+                                <div className="space-y-6">
+                                    {quizData.map((q, qIndex) => {
+                                        const userAnswer = answers[qIndex];
+                                        const isCorrect = userAnswer === q.correctIndex;
+                                        const notAnswered = userAnswer === null;
+
+                                        return (
+                                            <div key={qIndex} className={`p-6 rounded-2xl border ${isCorrect ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-200 bg-white shadow-sm'}`}>
+                                                <p className="font-semibold text-slate-800 mb-4 text-[15px] leading-relaxed">{q.question}</p>
+                                                
+                                                <div className="mb-5 space-y-2.5">
+                                                    {q.options.map((opt, optIndex) => {
+                                                        const isSelected = userAnswer === optIndex;
+                                                        const isCorrectOption = q.correctIndex === optIndex;
+                                                        
+                                                        let style = "flex items-start gap-3 p-3 rounded-lg text-sm transition-colors ";
+                                                        let icon = <div className="w-5 h-5 mt-0.5 shrink-0"></div>;
+
+                                                        if (isCorrectOption) {
+                                                            style += "bg-emerald-100 text-emerald-800 font-semibold";
+                                                            icon = <svg className="w-5 h-5 mt-0.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>;
+                                                        } else if (isSelected && !isCorrectOption) {
+                                                            style += "bg-rose-100 text-rose-800 font-semibold line-through opacity-80";
+                                                            icon = <svg className="w-5 h-5 mt-0.5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>;
+                                                        } else {
+                                                            style += "bg-slate-100 text-slate-500 opacity-60";
+                                                        }
+
+                                                        return (
+                                                            <div key={optIndex} className={style}>
+                                                                {icon}
+                                                                <span className="leading-snug">{opt}</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+
+                                                <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                                                    <p className="text-sm font-bold text-indigo-800 mb-1">Explanation</p>
+                                                    <p className="text-sm text-indigo-900/80 leading-relaxed">{q.explanation}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-4 bg-white border-t border-slate-200 text-center shrink-0">
+                                <button 
+                                    onClick={handleRestart}
+                                    className="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-8 rounded-xl transition duration-200 shadow-md">
+                                    Return to Home
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const q = quizData[currentQuestion];
+            const answeredCount = answers.filter(a => a !== null).length;
+            const progress = (answeredCount / quizData.length) * 100;
+
+            return (
+                <div className="min-h-screen flex flex-col md:flex-row">
+                    
+                    {/* Sidebar / Grid Navigator */}
+                    <div className="w-full md:w-80 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shrink-0">
+                        <div className="p-6 border-b border-slate-100">
+                            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                                Navigation
+                            </h2>
+                            <p className="text-sm text-slate-500 mt-1">{answeredCount} of {quizData.length} answered</p>
+                            
+                            {/* Mini Progress bar */}
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full mt-4 overflow-hidden">
+                                <div className="h-full bg-indigo-500 transition-all duration-300" style={{width: `${progress}%`}}></div>
+                            </div>
+                        </div>
+                        
+                        <div className="p-6 overflow-y-auto max-h-48 md:max-h-full grow">
+                            <div className="grid grid-cols-5 md:grid-cols-4 gap-2">
+                                {quizData.map((_, index) => {
+                                    const isAnswered = answers[index] !== null;
+                                    const isCurrent = currentQuestion === index;
+                                    
+                                    let btnStyle = "h-10 w-full rounded-lg font-semibold text-sm transition-all flex items-center justify-center border-2 ";
+                                    
+                                    if (isCurrent) {
+                                        btnStyle += "bg-indigo-600 border-indigo-600 text-white shadow-md transform scale-105 z-10";
+                                    } else if (isAnswered) {
+                                        btnStyle += "bg-indigo-50 border-indigo-200 text-indigo-700 hover:border-indigo-400";
+                                    } else {
+                                        btnStyle += "bg-white border-slate-200 text-slate-500 hover:border-slate-400 hover:bg-slate-50";
+                                    }
+
+                                    return (
+                                        <button 
+                                            key={index} 
+                                            onClick={() => handleJump(index)}
+                                            className={btnStyle}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="flex-1 bg-slate-50/50 flex flex-col p-4 md:p-10 relative">
+                        <div className="max-w-3xl w-full mx-auto fade-in">
+                            
+                            <div className="mb-8">
+                                <span className="inline-flex items-center gap-1.5 py-1 px-3 rounded-full bg-violet-100 text-violet-800 text-xs font-bold uppercase tracking-wider mb-4 border border-violet-200">
+                                    Question {currentQuestion + 1}
+                                </span>
+                                <h2 className="text-xl md:text-2xl font-semibold text-slate-800 leading-snug">
+                                    {q.question}
+                                </h2>
+                            </div>
+
+                            <div className="space-y-3 mb-10">
+                                {q.options.map((option, index) => {
+                                    const isSelected = answers[currentQuestion] === index;
+                                    return (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleOptionClick(index)}
+                                            className={`w-full text-left p-4 md:p-5 rounded-xl border-2 transition-all duration-200 flex items-center gap-4 ${
+                                                isSelected 
+                                                ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 shadow-sm ring-1 ring-indigo-600' 
+                                                : 'border-slate-200 hover:border-indigo-300 hover:bg-white text-slate-700 bg-white'
+                                            }`}
+                                        >
+                                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? 'border-indigo-600' : 'border-slate-300'}`}>
+                                                {isSelected && <div className="w-3 h-3 rounded-full bg-indigo-600"></div>}
+                                            </div>
+                                            <span className="font-medium text-[15px] leading-relaxed">{option}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                        </div>
+
+                        {/* Navigation Footer */}
+                        <div className="mt-auto max-w-3xl w-full mx-auto pt-6 flex items-center justify-between border-t border-slate-200/60">
+                            <button
+                                onClick={handlePrev}
+                                disabled={currentQuestion === 0}
+                                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                                    currentQuestion === 0 
+                                    ? 'bg-transparent text-slate-300 cursor-not-allowed' 
+                                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm'
+                                }`}
+                            >
+                                ← Previous
+                            </button>
+
+                            {currentQuestion === quizData.length - 1 ? (
+                                <button
+                                    onClick={handleSubmit}
+                                    className="px-8 py-3 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg transition-all"
+                                >
+                                    Submit Exam
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleNext}
+                                    className="px-8 py-3 rounded-xl font-semibold bg-slate-800 hover:bg-slate-900 text-white shadow-md transition-all"
+                                >
+                                    Next →
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<QuizApp />);
+    </script>
+</body>
+</html>
